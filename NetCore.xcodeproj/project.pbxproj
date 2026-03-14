@@ -7,8 +7,27 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A6D9A6132F654270002E5130 /* NetworkError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D9A6122F654270002E5130 /* NetworkError.swift */; };
-		A6D9A6162F65429B002E5130 /* Endpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D9A6152F65429B002E5130 /* Endpoint.swift */; };
+		A65D2C182F65789A00484A64 /* NetworkError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2C072F65789A00484A64 /* NetworkError.swift */; };
+		A65D2C192F65789A00484A64 /* TokenProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2BFC2F65789A00484A64 /* TokenProvider.swift */; };
+		A65D2C1A2F65789A00484A64 /* NetworkLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2C0B2F65789A00484A64 /* NetworkLogger.swift */; };
+		A65D2C1B2F65789A00484A64 /* HttpClientConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2C052F65789A00484A64 /* HttpClientConfig.swift */; };
+		A65D2C1C2F65789A00484A64 /* MockProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2C0D2F65789A00484A64 /* MockProvider.swift */; };
+		A65D2C1D2F65789A00484A64 /* RequestPool.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2C122F65789A00484A64 /* RequestPool.swift */; };
+		A65D2C1E2F65789A00484A64 /* OfflineRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2C102F65789A00484A64 /* OfflineRequest.swift */; };
+		A65D2C1F2F65789A00484A64 /* CachePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2C002F65789A00484A64 /* CachePolicy.swift */; };
+		A65D2C202F65789A00484A64 /* TokenRefresher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2BFD2F65789A00484A64 /* TokenRefresher.swift */; };
+		A65D2C212F65789A00484A64 /* HttpClientFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2C062F65789A00484A64 /* HttpClientFactory.swift */; };
+		A65D2C222F65789A00484A64 /* HttpClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2C042F65789A00484A64 /* HttpClient.swift */; };
+		A65D2C232F65789A00484A64 /* OfflineQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2C0F2F65789A00484A64 /* OfflineQueue.swift */; };
+		A65D2C242F65789A00484A64 /* AuthInterceptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2BFA2F65789A00484A64 /* AuthInterceptor.swift */; };
+		A65D2C252F65789A00484A64 /* TokenManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2BFB2F65789A00484A64 /* TokenManager.swift */; };
+		A65D2C262F65789A00484A64 /* RequestDeduplicationPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2C082F65789A00484A64 /* RequestDeduplicationPolicy.swift */; };
+		A65D2C272F65789A00484A64 /* TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2BFE2F65789A00484A64 /* TokenStore.swift */; };
+		A65D2C282F65789A00484A64 /* HTTPCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2C012F65789A00484A64 /* HTTPCache.swift */; };
+		A65D2C292F65789A00484A64 /* RetryInterceptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2C142F65789A00484A64 /* RetryInterceptor.swift */; };
+		A65D2C2A2F65789A00484A64 /* TransferManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2C162F65789A00484A64 /* TransferManager.swift */; };
+		A65D2C2B2F65789A00484A64 /* Endpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2C032F65789A00484A64 /* Endpoint.swift */; };
+		A65D2C2C2F65789A00484A64 /* ResponseDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65D2C092F65789A00484A64 /* ResponseDecoder.swift */; };
 		A6D9A6192F6542E1002E5130 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = A6D9A6182F6542E1002E5130 /* Alamofire */; };
 		A6D9A61B2F6542E1002E5130 /* AlamofireDynamic in Frameworks */ = {isa = PBXBuildFile; productRef = A6D9A61A2F6542E1002E5130 /* AlamofireDynamic */; };
 		A6D9A61D2F654342002E5130 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D9A61C2F654342002E5130 /* Package.swift */; };
@@ -26,8 +45,27 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		A6D9A6122F654270002E5130 /* NetworkError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkError.swift; sourceTree = "<group>"; };
-		A6D9A6152F65429B002E5130 /* Endpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoint.swift; sourceTree = "<group>"; };
+		A65D2BFA2F65789A00484A64 /* AuthInterceptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthInterceptor.swift; sourceTree = "<group>"; };
+		A65D2BFB2F65789A00484A64 /* TokenManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenManager.swift; sourceTree = "<group>"; };
+		A65D2BFC2F65789A00484A64 /* TokenProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenProvider.swift; sourceTree = "<group>"; };
+		A65D2BFD2F65789A00484A64 /* TokenRefresher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenRefresher.swift; sourceTree = "<group>"; };
+		A65D2BFE2F65789A00484A64 /* TokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenStore.swift; sourceTree = "<group>"; };
+		A65D2C002F65789A00484A64 /* CachePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachePolicy.swift; sourceTree = "<group>"; };
+		A65D2C012F65789A00484A64 /* HTTPCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPCache.swift; sourceTree = "<group>"; };
+		A65D2C032F65789A00484A64 /* Endpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoint.swift; sourceTree = "<group>"; };
+		A65D2C042F65789A00484A64 /* HttpClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HttpClient.swift; sourceTree = "<group>"; };
+		A65D2C052F65789A00484A64 /* HttpClientConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HttpClientConfig.swift; sourceTree = "<group>"; };
+		A65D2C062F65789A00484A64 /* HttpClientFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HttpClientFactory.swift; sourceTree = "<group>"; };
+		A65D2C072F65789A00484A64 /* NetworkError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkError.swift; sourceTree = "<group>"; };
+		A65D2C082F65789A00484A64 /* RequestDeduplicationPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestDeduplicationPolicy.swift; sourceTree = "<group>"; };
+		A65D2C092F65789A00484A64 /* ResponseDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseDecoder.swift; sourceTree = "<group>"; };
+		A65D2C0B2F65789A00484A64 /* NetworkLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkLogger.swift; sourceTree = "<group>"; };
+		A65D2C0D2F65789A00484A64 /* MockProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockProvider.swift; sourceTree = "<group>"; };
+		A65D2C0F2F65789A00484A64 /* OfflineQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineQueue.swift; sourceTree = "<group>"; };
+		A65D2C102F65789A00484A64 /* OfflineRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineRequest.swift; sourceTree = "<group>"; };
+		A65D2C122F65789A00484A64 /* RequestPool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestPool.swift; sourceTree = "<group>"; };
+		A65D2C142F65789A00484A64 /* RetryInterceptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryInterceptor.swift; sourceTree = "<group>"; };
+		A65D2C162F65789A00484A64 /* TransferManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferManager.swift; sourceTree = "<group>"; };
 		A6D9A61C2F654342002E5130 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		A6E1F7282F6520C20040DE94 /* NetCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = NetCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6E1F7312F6520C30040DE94 /* NetCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NetCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -67,29 +105,104 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		A65D2BFF2F65789A00484A64 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				A65D2BFA2F65789A00484A64 /* AuthInterceptor.swift */,
+				A65D2BFB2F65789A00484A64 /* TokenManager.swift */,
+				A65D2BFC2F65789A00484A64 /* TokenProvider.swift */,
+				A65D2BFD2F65789A00484A64 /* TokenRefresher.swift */,
+				A65D2BFE2F65789A00484A64 /* TokenStore.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		A65D2C022F65789A00484A64 /* Cache */ = {
+			isa = PBXGroup;
+			children = (
+				A65D2C002F65789A00484A64 /* CachePolicy.swift */,
+				A65D2C012F65789A00484A64 /* HTTPCache.swift */,
+			);
+			path = Cache;
+			sourceTree = "<group>";
+		};
+		A65D2C0A2F65789A00484A64 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				A65D2C032F65789A00484A64 /* Endpoint.swift */,
+				A65D2C042F65789A00484A64 /* HttpClient.swift */,
+				A65D2C052F65789A00484A64 /* HttpClientConfig.swift */,
+				A65D2C062F65789A00484A64 /* HttpClientFactory.swift */,
+				A65D2C072F65789A00484A64 /* NetworkError.swift */,
+				A65D2C082F65789A00484A64 /* RequestDeduplicationPolicy.swift */,
+				A65D2C092F65789A00484A64 /* ResponseDecoder.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		A65D2C0C2F65789A00484A64 /* Logger */ = {
+			isa = PBXGroup;
+			children = (
+				A65D2C0B2F65789A00484A64 /* NetworkLogger.swift */,
+			);
+			path = Logger;
+			sourceTree = "<group>";
+		};
+		A65D2C0E2F65789A00484A64 /* Mock */ = {
+			isa = PBXGroup;
+			children = (
+				A65D2C0D2F65789A00484A64 /* MockProvider.swift */,
+			);
+			path = Mock;
+			sourceTree = "<group>";
+		};
+		A65D2C112F65789A00484A64 /* Offline */ = {
+			isa = PBXGroup;
+			children = (
+				A65D2C0F2F65789A00484A64 /* OfflineQueue.swift */,
+				A65D2C102F65789A00484A64 /* OfflineRequest.swift */,
+			);
+			path = Offline;
+			sourceTree = "<group>";
+		};
+		A65D2C132F65789A00484A64 /* RequestPool */ = {
+			isa = PBXGroup;
+			children = (
+				A65D2C122F65789A00484A64 /* RequestPool.swift */,
+			);
+			path = RequestPool;
+			sourceTree = "<group>";
+		};
+		A65D2C152F65789A00484A64 /* Retry */ = {
+			isa = PBXGroup;
+			children = (
+				A65D2C142F65789A00484A64 /* RetryInterceptor.swift */,
+			);
+			path = Retry;
+			sourceTree = "<group>";
+		};
+		A65D2C172F65789A00484A64 /* UploadDownload */ = {
+			isa = PBXGroup;
+			children = (
+				A65D2C162F65789A00484A64 /* TransferManager.swift */,
+			);
+			path = UploadDownload;
+			sourceTree = "<group>";
+		};
 		A6D9A60F2F65425C002E5130 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				A6D9A6142F654290002E5130 /* EndPoint */,
-				A6D9A6102F654262002E5130 /* NetworkError */,
+				A65D2BFF2F65789A00484A64 /* Auth */,
+				A65D2C022F65789A00484A64 /* Cache */,
+				A65D2C0A2F65789A00484A64 /* Core */,
+				A65D2C0C2F65789A00484A64 /* Logger */,
+				A65D2C0E2F65789A00484A64 /* Mock */,
+				A65D2C112F65789A00484A64 /* Offline */,
+				A65D2C132F65789A00484A64 /* RequestPool */,
+				A65D2C152F65789A00484A64 /* Retry */,
+				A65D2C172F65789A00484A64 /* UploadDownload */,
 			);
 			path = Sources;
-			sourceTree = "<group>";
-		};
-		A6D9A6102F654262002E5130 /* NetworkError */ = {
-			isa = PBXGroup;
-			children = (
-				A6D9A6122F654270002E5130 /* NetworkError.swift */,
-			);
-			path = NetworkError;
-			sourceTree = "<group>";
-		};
-		A6D9A6142F654290002E5130 /* EndPoint */ = {
-			isa = PBXGroup;
-			children = (
-				A6D9A6152F65429B002E5130 /* Endpoint.swift */,
-			);
-			path = EndPoint;
 			sourceTree = "<group>";
 		};
 		A6E1F71E2F6520C20040DE94 = {
@@ -236,9 +349,28 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A65D2C182F65789A00484A64 /* NetworkError.swift in Sources */,
+				A65D2C192F65789A00484A64 /* TokenProvider.swift in Sources */,
+				A65D2C1A2F65789A00484A64 /* NetworkLogger.swift in Sources */,
+				A65D2C1B2F65789A00484A64 /* HttpClientConfig.swift in Sources */,
+				A65D2C1C2F65789A00484A64 /* MockProvider.swift in Sources */,
+				A65D2C1D2F65789A00484A64 /* RequestPool.swift in Sources */,
+				A65D2C1E2F65789A00484A64 /* OfflineRequest.swift in Sources */,
+				A65D2C1F2F65789A00484A64 /* CachePolicy.swift in Sources */,
+				A65D2C202F65789A00484A64 /* TokenRefresher.swift in Sources */,
+				A65D2C212F65789A00484A64 /* HttpClientFactory.swift in Sources */,
+				A65D2C222F65789A00484A64 /* HttpClient.swift in Sources */,
+				A65D2C232F65789A00484A64 /* OfflineQueue.swift in Sources */,
+				A65D2C242F65789A00484A64 /* AuthInterceptor.swift in Sources */,
+				A65D2C252F65789A00484A64 /* TokenManager.swift in Sources */,
+				A65D2C262F65789A00484A64 /* RequestDeduplicationPolicy.swift in Sources */,
+				A65D2C272F65789A00484A64 /* TokenStore.swift in Sources */,
+				A65D2C282F65789A00484A64 /* HTTPCache.swift in Sources */,
+				A65D2C292F65789A00484A64 /* RetryInterceptor.swift in Sources */,
+				A65D2C2A2F65789A00484A64 /* TransferManager.swift in Sources */,
+				A65D2C2B2F65789A00484A64 /* Endpoint.swift in Sources */,
+				A65D2C2C2F65789A00484A64 /* ResponseDecoder.swift in Sources */,
 				A6D9A61D2F654342002E5130 /* Package.swift in Sources */,
-				A6D9A6162F65429B002E5130 /* Endpoint.swift in Sources */,
-				A6D9A6132F654270002E5130 /* NetworkError.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
