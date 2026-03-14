@@ -20,5 +20,5 @@ NetCore 是一个 **Swift 网络 SDK**，基于 `Alamofire`，支持现代 iOS �
 
 ```swift
 dependencies: [
-    .package(url: "[https://github.com/your-org/NetCore.git](https://github.com/Girlkiller/NetCore.git)", from: "1.0.0")
+    .package(url: "https://github.com/Girlkiller/NetCore.git", from: "1.0.0")
 ]
