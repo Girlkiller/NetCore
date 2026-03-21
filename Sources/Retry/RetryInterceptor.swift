@@ -8,17 +8,17 @@
 import Foundation
 import Alamofire
 
-final class RetryInterceptor: RequestInterceptor {
+public final class RetryInterceptor: RequestInterceptor {
 
     let tokenManager: TokenManager
 
-    init(tokenManager: TokenManager) {
+    public init(tokenManager: TokenManager) {
 
         self.tokenManager = tokenManager
 
     }
 
-    func retry(
+    public func retry(
         _ request: Request,
         for session: Session,
         dueTo error: Error,
