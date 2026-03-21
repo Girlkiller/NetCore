@@ -21,4 +21,8 @@ public final class MemoryTokenStore: TokenStore {
 
     public var refreshToken: String?
 
+    public init(accessToken: String? = nil, refreshToken: String? = nil) {
+        self.accessToken = accessToken
+        self.refreshToken = refreshToken
+    }
 }
