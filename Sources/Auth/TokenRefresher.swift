@@ -9,6 +9,6 @@ import Foundation
 
 public protocol TokenRefresher: Sendable {
 
-    func refreshToken() async throws -> String
+    func refreshToken() async throws -> AuthToken
 
 }

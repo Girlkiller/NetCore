@@ -11,7 +11,7 @@ public actor TokenManager {
 
     private let refresher: TokenRefresher
 
-    private var refreshTask: Task<String, Error>?
+    private var refreshTask: Task<AuthToken, Error>?
 
     private var refreshAttempts = 0
 
@@ -34,7 +34,7 @@ public actor TokenManager {
 
 extension TokenManager {
 
-    public func refreshIfNeeded() async throws -> String {
+    public func refreshIfNeeded() async throws -> AuthToken {
 
         /// 如果已经在刷新，直接等待
         if let task = refreshTask {
@@ -54,7 +54,7 @@ extension TokenManager {
 
         refreshAttempts += 1
 
-        let task = Task<String, Error> {
+        let task = Task<AuthToken, Error> {
 
             defer { refreshTask = nil }
 
