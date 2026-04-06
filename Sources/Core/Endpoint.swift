@@ -37,7 +37,9 @@ public extension Endpoint {
 
     var parameters: Parameters? { nil }
 
-    var headers: HTTPHeaders? { nil }
+    var headers: HTTPHeaders? {
+        ["Content-Type": "application/json"]
+    }
 
     var encoding: ParameterEncoding { URLEncoding.default }
 

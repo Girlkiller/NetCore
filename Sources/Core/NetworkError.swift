@@ -90,32 +90,85 @@ public extension NetworkError {
     /// 用于打印 / log 的调试信息
     var debugDescription: String {
         switch self {
-        case .invalidURL: return "Invalid URL"
-        case .decode(let err): return "Decode error: \(err)"
-        case .network(let err): return "Network error: \(err)"
-        case .emptyResponse: return "Empty response from server"
 
-        case .cacheNotFound: return "Cache not found"
-        case .cacheExpired: return "Cache expired"
-        case .cacheSaveFailed: return "Cache save failed"
+        case .invalidURL:
+            return "[Network] ❌ Invalid URL"
 
-        case .duplicateRequest: return "Duplicate request detected"
-        case .requestCoalesced: return "Request coalesced (merged)"
+        case .decode(let err):
+            return "[Decode] ❌ Failed to decode response → \(err)"
 
-        case .tokenRefreshFailed: return "Token refresh failed"
-        case .unauthorized: return "Unauthorized (401)"
-        case .forbidden: return "Forbidden (403)"
-        case .invalidConfiguration: return "HttpClient configuration invalid"
+        case .network(let err):
+            return "[Network] ❌ Request failed → \(err.localizedDescription)"
 
-        case .fileNotFound: return "File not found for download"
-        case .fileSaveFailed: return "Failed to save downloaded file"
-        case .uploadFailed: return "Upload failed"
+        case .emptyResponse:
+            return "[Network] ⚠️ Empty response from server"
 
-        case .timeout: return "Request timeout"
-        case .cancelled: return "Request cancelled"
-        case .offline: return "No network connection"
-        case .server(let code, let message, _, _):
-            return "Server Error, code: \(code), message: \(message)"
+            // MARK: - Cache
+
+        case .cacheNotFound:
+            return "[Cache] ⚠️ Cache not found"
+
+        case .cacheExpired:
+            return "[Cache] ⚠️ Cache expired"
+
+        case .cacheSaveFailed:
+            return "[Cache] ❌ Failed to save cache"
+
+            // MARK: - Deduplication
+
+        case .duplicateRequest:
+            return "[Request] ⚠️ Duplicate request detected"
+
+        case .requestCoalesced:
+            return "[Request] ℹ️ Request coalesced (merged)"
+
+            // MARK: - Auth
+
+        case .tokenRefreshFailed:
+            return "[Auth] ❌ Token refresh failed"
+
+        case .unauthorized:
+            return "[Auth] ❌ Unauthorized (401)"
+
+        case .forbidden:
+            return "[Auth] ❌ Forbidden (403)"
+
+        case .invalidConfiguration:
+            return "[Config] ❌ HttpClient configuration invalid"
+
+            // MARK: - File
+
+        case .fileNotFound:
+            return "[File] ❌ File not found"
+
+        case .fileSaveFailed:
+            return "[File] ❌ Failed to save file"
+
+        case .uploadFailed:
+            return "[Upload] ❌ Upload failed"
+
+            // MARK: - Network State
+
+        case .timeout:
+            return "[Network] ⏱ Timeout"
+
+        case .cancelled:
+            return "[Network] ⚠️ Request cancelled"
+
+        case .offline:
+            return "[Network] ❌ No internet connection"
+
+            // MARK: - Server
+
+        case .server(let code, let message, let response, _):
+
+            let bizCode = response?.code ?? -1
+
+            return """
+        [Server] ❌ HTTP \(code)
+        businessCode: \(bizCode)
+        message: \(message)
+        """
         }
     }
 
