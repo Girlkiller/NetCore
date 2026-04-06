@@ -210,11 +210,7 @@ private extension HttpClient {
 
         let key = cacheKey(for: endpoint)
 
-        let urlString = endpoint.baseURL + endpoint.path
-
-        guard let url = URL(string: urlString) else {
-            throw NetworkError.invalidURL
-        }
+        let url = try buildURL(from: endpoint)
 
         let response = await session.request(
             url,
@@ -271,6 +267,20 @@ private extension HttpClient {
 
             throw NetworkError.network(error)
         }
+    }
+
+    func buildURL(from endpoint: Endpoint) throws -> URL {
+
+        guard let baseURL = URL(string: endpoint.baseURL) else {
+            throw NetworkError.invalidURL
+        }
+
+        // ⚠️ 去掉 path 开头的 /
+        let cleanPath = endpoint.path.hasPrefix("/")
+        ? String(endpoint.path.dropFirst())
+        : endpoint.path
+
+        return baseURL.appendingPathComponent(cleanPath)
     }
 }
 
