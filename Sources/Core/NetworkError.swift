@@ -40,6 +40,9 @@ public enum NetworkError: Error {
     case timeout
     case cancelled
     case offline
+
+    // server相关
+    case server(code: Int, message: String, response: APIErrorResponse?, raw: Data?)
 }
 
 // MARK: - NetworkError Extension
@@ -79,6 +82,8 @@ public extension NetworkError {
         case .timeout: return 6000
         case .cancelled: return 6001
         case .offline: return 6002
+        case .server(let code, _, _, _):
+            return code
         }
     }
 
@@ -109,6 +114,8 @@ public extension NetworkError {
         case .timeout: return "Request timeout"
         case .cancelled: return "Request cancelled"
         case .offline: return "No network connection"
+        case .server(let code, let message, _, _):
+            return "Server Error, code: \(code), message: \(message)"
         }
     }
 
@@ -139,6 +146,8 @@ public extension NetworkError {
         case .timeout: return "timeout"
         case .cancelled: return "cancelled"
         case .offline: return "offline"
+        case .server(let code, _, _, _):
+            return "server_error_\(code)"
         }
     }
 

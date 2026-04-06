@@ -235,7 +235,7 @@ private extension HttpClient {
 
             /// ✅ 2. 判断 HTTP code
             guard let code = statusCode else {
-                throw NetworkError.noResponse
+                throw NetworkError.emptyResponse
             }
 
             /// ✅ 3. 成功范围（200~299）
@@ -256,6 +256,7 @@ private extension HttpClient {
             throw NetworkError.server(
                 code: code,
                 message: apiError?.message ?? "Unknown error",
+                response: apiError,
                 raw: data
             )
 
