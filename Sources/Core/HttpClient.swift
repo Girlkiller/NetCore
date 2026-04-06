@@ -69,20 +69,34 @@ extension HttpClient {
     /// 生成 cache key
     private func cacheKey(for endpoint: Endpoint) -> String {
 
-        var key = endpoint.baseURL + endpoint.path
+        // ✅ 1. 用标准 URL（复用你刚写的 buildURL）
+        guard let url = try? buildURL(from: endpoint) else {
+            return UUID().uuidString
+        }
 
-        if let params = endpoint.parameters {
+        var key = url.absoluteString
+
+        // ✅ 2. method（必须加！）
+        key += "|\(endpoint.method.rawValue)"
+
+        // ✅ 3. body（只对 POST / PUT 等）
+        if let params = endpoint.parameters,
+           endpoint.method != .get {
 
             let sorted = params
-                .map { "\($0.key)=\($0.value)" }
+                .map { "\($0.key)=\(stringify($0.value))" }
                 .sorted()
                 .joined(separator: "&")
 
-            key += "?\(sorted)"
+            key += "|body:\(sorted)"
+        }
+
+        // ✅ 4. 用户隔离（非常重要！）
+        if let token = endpoint.headers?["Authorization"] {
+            key += "|auth:\(token)"
         }
 
         return key
-
     }
 
 }
@@ -271,16 +285,52 @@ private extension HttpClient {
 
     func buildURL(from endpoint: Endpoint) throws -> URL {
 
-        guard let baseURL = URL(string: endpoint.baseURL) else {
+        guard var components = URLComponents(string: endpoint.baseURL) else {
             throw NetworkError.invalidURL
         }
 
-        // ⚠️ 去掉 path 开头的 /
-        let cleanPath = endpoint.path.hasPrefix("/")
-        ? String(endpoint.path.dropFirst())
-        : endpoint.path
+        // 👉 1. 拆分 baseURL 自带 path（比如 /v1）
+        let basePathComponents = components.path
+            .split(separator: "/")
+            .map(String.init)
 
-        return baseURL.appendingPathComponent(cleanPath)
+        // 👉 2. 拆分 endpoint.path（兼容各种写法）
+        let endpointPathComponents = endpoint.path
+            .split(separator: "/")
+            .map(String.init)
+
+        // 👉 3. 合并 path（核心）
+        let fullPath = (basePathComponents + endpointPathComponents)
+            .filter { !$0.isEmpty }
+            .joined(separator: "/")
+
+        components.path = "/" + fullPath
+
+        // 👉 4. 处理 query（只给 GET 用）
+        if endpoint.method == .get,
+           let params = endpoint.parameters {
+
+            components.queryItems = params.map {
+                URLQueryItem(name: $0.key, value: stringify($0.value))
+            }
+        }
+
+        // 👉 5. 生成 URL
+        guard let url = components.url else {
+            throw NetworkError.invalidURL
+        }
+
+        return url
+    }
+
+    private func stringify(_ value: Any) -> String {
+        switch value {
+        case let v as String: return v
+        case let v as Int: return String(v)
+        case let v as Double: return String(v)
+        case let v as Bool: return v ? "true" : "false"
+        default: return "\(value)"
+        }
     }
 }
 
