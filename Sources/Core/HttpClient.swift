@@ -212,8 +212,9 @@ private extension HttpClient {
 
         let urlString = endpoint.baseURL + endpoint.path
 
-        guard let url = URL(string: urlString)
-        else { throw NetworkError.invalidURL }
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
 
         let response = await session.request(
             url,
@@ -225,38 +226,51 @@ private extension HttpClient {
             .serializingData()
             .response
 
+        /// ✅ 1. 先拿 HTTP 状态码
+        let statusCode = response.response?.statusCode
+
         switch response.result {
 
         case .success(let data):
 
-            if endpoint.cachePolicy != .none {
-
-                HTTPCache.shared.save(data, key: key)
-
+            /// ✅ 2. 判断 HTTP code
+            guard let code = statusCode else {
+                throw NetworkError.noResponse
             }
 
-            return try decoder(for: endpoint)
-                .decode(T.self, from: data)
+            /// ✅ 3. 成功范围（200~299）
+            if (200..<300).contains(code) {
+
+                if endpoint.cachePolicy != .none {
+                    HTTPCache.shared.save(data, key: key)
+                }
+
+                return try decoder(for: endpoint)
+                    .decode(T.self, from: data)
+            }
+
+            /// ❗ 4. 非 2xx：解析 error body
+            let apiError = try? decoder(for: endpoint)
+                .decode(APIErrorResponse.self, from: data)
+
+            throw NetworkError.server(
+                code: code,
+                message: apiError?.message ?? "Unknown error",
+                raw: data
+            )
 
         case .failure(let error):
 
             /// networkElseCache
             if endpoint.cachePolicy == .networkElseCache {
-
-                if let cache: T =
-                    try readCache(endpoint, type: T.self) {
-
+                if let cache: T = try readCache(endpoint, type: T.self) {
                     return cache
                 }
-
             }
 
             throw NetworkError.network(error)
-
         }
-
     }
-
 }
 
 public extension HttpClient {
