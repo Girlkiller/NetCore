@@ -69,29 +69,19 @@ extension HttpClient {
     /// 生成 cache key
     private func cacheKey(for endpoint: Endpoint) -> String {
 
-        // ✅ 1. 用标准 URL（复用你刚写的 buildURL）
         guard let url = try? buildURL(from: endpoint) else {
             return UUID().uuidString
         }
 
         var key = url.absoluteString
 
-        // ✅ 2. method（必须加！）
+        /// ✅ method
         key += "|\(endpoint.method.rawValue)"
 
-        // ✅ 3. body（只对 POST / PUT 等）
-        if let params = endpoint.parameters,
-           endpoint.method != .get {
+        /// ✅ task（核心）
+        key += "|task:\(taskCacheKey(endpoint.task))"
 
-            let sorted = params
-                .map { "\($0.key)=\(stringify($0.value))" }
-                .sorted()
-                .joined(separator: "&")
-
-            key += "|body:\(sorted)"
-        }
-
-        // ✅ 4. 用户隔离（非常重要！）
+        /// ✅ 用户隔离
         if let token = endpoint.headers?["Authorization"] {
             key += "|auth:\(token)"
         }
@@ -99,6 +89,62 @@ extension HttpClient {
         return key
     }
 
+    private func taskCacheKey(_ task: RequestTask) -> String {
+
+        switch task {
+
+        case .plain:
+            return "plain"
+
+        case .query(let items):
+
+            let sorted = items
+                .sorted { $0.name < $1.name }
+                .map { "\($0.name)=\($0.value ?? "")" }
+                .joined(separator: "&")
+
+            return "query:\(sorted)"
+
+        case .json(let body):
+
+            return "json:\(encodeEncodable(body))"
+
+        case .form(let params):
+
+            let sorted = params
+                .map { "\($0.key)=\(stringify($0.value))" }
+                .sorted()
+                .joined(separator: "&")
+
+            return "form:\(sorted)"
+
+        case .raw(let data, _):
+
+            return "raw:\(data.hashValue)"
+
+        case .multipart:
+
+            /// ⚠️ multipart 一般不建议缓存
+            return "multipart"
+        }
+    }
+
+    private func encodeEncodable(_ value: Encodable) -> String {
+
+        let encoder = JSONEncoder()
+
+        /// 👉 保证顺序稳定（非常关键！）
+        if #available(iOS 13.0, *) {
+            encoder.outputFormatting = [.sortedKeys]
+        }
+
+        guard let data = try? encoder.encode(AnyEncodable(value)),
+              let string = String(data: data, encoding: .utf8) else {
+            return "invalid_json"
+        }
+
+        return string
+    }
 }
 
 
@@ -223,32 +269,97 @@ private extension HttpClient {
     ) async throws -> T {
 
         let key = cacheKey(for: endpoint)
-
         let url = try buildURL(from: endpoint)
 
-        let response = await session.request(
-            url,
-            method: endpoint.method,
-            parameters: endpoint.parameters,
-            encoding: endpoint.encoding,
-            headers: endpoint.headers
-        )
+        let request: DataRequest
+
+        // ✅ 根据 RequestTask 构建请求
+        switch endpoint.task {
+
+        case .plain:
+
+            request = session.request(
+                url,
+                method: endpoint.method,
+                headers: endpoint.headers
+            )
+
+        case .query(let items):
+
+            var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            components?.queryItems = items
+
+            guard let finalURL = components?.url else {
+                throw NetworkError.invalidURL
+            }
+
+            request = session.request(
+                finalURL,
+                method: endpoint.method,
+                headers: endpoint.headers
+            )
+
+        case .json(let body):
+
+            request = session.request(
+                url,
+                method: endpoint.method,
+                parameters: body,
+                encoder: JSONParameterEncoder.default,
+                headers: endpoint.headers
+            )
+
+        case .form(let params):
+
+            var headers = endpoint.headers ?? [:]
+            headers.add(name: "Content-Type", value: "application/x-www-form-urlencoded")
+
+            request = session.request(
+                url,
+                method: endpoint.method,
+                parameters: params,
+                encoding: URLEncoding.httpBody,
+                headers: headers
+            )
+
+        case .raw(let data, let contentType):
+
+            var urlRequest = try URLRequest(
+                url: url,
+                method: endpoint.method,
+                headers: endpoint.headers
+            )
+
+            urlRequest.setValue(contentType, forHTTPHeaderField: "Content-Type")
+            urlRequest.httpBody = data
+
+            request = session.request(urlRequest)
+
+        case .multipart(let builder):
+
+            request = session.upload(
+                multipartFormData: builder,
+                to: url,
+                method: endpoint.method,
+                headers: endpoint.headers
+            )
+        }
+
+        let response = await request
             .serializingData()
             .response
 
-        /// ✅ 1. 先拿 HTTP 状态码
         let statusCode = response.response?.statusCode
 
         switch response.result {
 
         case .success(let data):
 
-            /// ✅ 2. 判断 HTTP code
             guard let code = statusCode else {
                 throw NetworkError.emptyResponse
             }
 
-            /// ✅ 3. 成功范围（200~299）
+            /// ✅ 成功
             if (200..<300).contains(code) {
 
                 if endpoint.cachePolicy != .none {
@@ -259,7 +370,7 @@ private extension HttpClient {
                     .decode(T.self, from: data)
             }
 
-            /// ❗ 4. 非 2xx：解析 error body
+            /// ❗ 失败解析
             let apiError = try? decoder(for: endpoint)
                 .decode(APIErrorResponse.self, from: data)
 
@@ -289,33 +400,32 @@ private extension HttpClient {
             throw NetworkError.invalidURL
         }
 
-        // 👉 1. 拆分 baseURL 自带 path（比如 /v1）
-        let basePathComponents = components.path
-            .split(separator: "/")
-            .map(String.init)
+        // 👉 baseURL 原始 path（保留）
+        let basePath = components.path
 
-        // 👉 2. 拆分 endpoint.path（兼容各种写法）
-        let endpointPathComponents = endpoint.path
-            .split(separator: "/")
-            .map(String.init)
+        // 👉 endpoint path（清洗）
+        let endpointPath = endpoint.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
 
-        // 👉 3. 合并 path（核心）
-        let fullPath = (basePathComponents + endpointPathComponents)
-            .filter { !$0.isEmpty }
-            .joined(separator: "/")
-
-        components.path = "/" + fullPath
-
-        // 👉 4. 处理 query（只给 GET 用）
-        if endpoint.method == .get,
-           let params = endpoint.parameters {
-
-            components.queryItems = params.map {
-                URLQueryItem(name: $0.key, value: stringify($0.value))
+        // 👉 合并逻辑（关键）
+        if endpointPath.isEmpty {
+            // 保留 baseURL 原 path
+            components.path = basePath.isEmpty ? "/" : basePath
+        } else if basePath.isEmpty || basePath == "/" {
+            components.path = "/" + endpointPath
+        } else {
+            // 防止重复拼接（例如 /v1 + /v1/login）
+            if endpointPath.hasPrefix(basePath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))) {
+                components.path = "/" + endpointPath
+            } else {
+                components.path = basePath + "/" + endpointPath
             }
         }
 
-        // 👉 5. 生成 URL
+        // 👉 最终兜底（防止空 path）
+        if components.path.isEmpty {
+            components.path = "/"
+        }
+
         guard let url = components.url else {
             throw NetworkError.invalidURL
         }

@@ -8,6 +8,9 @@
 import Alamofire
 import Foundation
 
+import Alamofire
+import Foundation
+
 public protocol Endpoint {
 
     var baseURL: String { get }
@@ -15,14 +18,12 @@ public protocol Endpoint {
 
     var method: HTTPMethod { get }
 
-    var parameters: Parameters? { get }
+    /// ✅ 核心
+    var task: RequestTask { get }
 
     var headers: HTTPHeaders? { get }
 
-    var encoding: ParameterEncoding { get }
-
     var cachePolicy: CachePolicy { get }
-
     var cacheTTL: TimeInterval? { get }
 
     var decoder: ResponseDecoder? { get }
@@ -30,18 +31,13 @@ public protocol Endpoint {
     var requestKey: String { get }
 
     var deduplicationPolicy: RequestDeduplicationPolicy { get }
-
 }
 
 public extension Endpoint {
 
-    var parameters: Parameters? { nil }
-
     var headers: HTTPHeaders? {
         ["Content-Type": "application/json"]
     }
-
-    var encoding: ParameterEncoding { URLEncoding.default }
 
     var cachePolicy: CachePolicy { .networkOnly }
 
@@ -52,5 +48,4 @@ public extension Endpoint {
     var requestKey: String { path }
 
     var deduplicationPolicy: RequestDeduplicationPolicy { .coalesce }
-
 }
