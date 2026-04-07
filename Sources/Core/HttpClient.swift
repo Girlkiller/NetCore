@@ -82,7 +82,7 @@ extension HttpClient {
         key += "|task:\(taskCacheKey(endpoint.task))"
 
         /// ✅ 用户隔离
-        if let token = endpoint.headers?["Authorization"] {
+        if let token = buildHeaders(for: endpoint)?["Authorization"] {
             key += "|auth:\(token)"
         }
 
@@ -281,7 +281,7 @@ private extension HttpClient {
             request = session.request(
                 url,
                 method: endpoint.method,
-                headers: endpoint.headers
+                headers: buildHeaders(for: endpoint)
             )
 
         case .query(let items):
@@ -296,7 +296,7 @@ private extension HttpClient {
             request = session.request(
                 finalURL,
                 method: endpoint.method,
-                headers: endpoint.headers
+                headers: buildHeaders(for: endpoint)
             )
 
         case .json(let body):
@@ -306,12 +306,12 @@ private extension HttpClient {
                 method: endpoint.method,
                 parameters: body,
                 encoder: JSONParameterEncoder.default,
-                headers: endpoint.headers
+                headers: buildHeaders(for: endpoint)
             )
 
         case .form(let params):
 
-            var headers = endpoint.headers ?? [:]
+            var headers = buildHeaders(for: endpoint) ?? [:]
             headers.add(name: "Content-Type", value: "application/x-www-form-urlencoded")
 
             request = session.request(
@@ -327,7 +327,7 @@ private extension HttpClient {
             var urlRequest = try URLRequest(
                 url: url,
                 method: endpoint.method,
-                headers: endpoint.headers
+                headers: buildHeaders(for: endpoint)
             )
 
             urlRequest.setValue(contentType, forHTTPHeaderField: "Content-Type")
@@ -341,7 +341,7 @@ private extension HttpClient {
                 multipartFormData: builder,
                 to: url,
                 method: endpoint.method,
-                headers: endpoint.headers
+                headers: buildHeaders(for: endpoint)
             )
         }
 
@@ -433,6 +433,28 @@ private extension HttpClient {
         return url
     }
 
+    private func buildHeaders(for endpoint: Endpoint) -> HTTPHeaders? {
+
+        let common = config.commonHeaders ?? [:]
+        let custom = endpoint.headers ?? [:]
+
+        switch endpoint.headerStrategy {
+
+        case .merge:
+            var merged = common
+
+            // endpoint 覆盖 common
+            for header in custom {
+                merged.update(name: header.name, value: header.value)
+            }
+
+            return merged
+
+        case .replace:
+            return endpoint.headers
+        }
+    }
+
     private func stringify(_ value: Any) -> String {
         switch value {
         case let v as String: return v
@@ -462,7 +484,7 @@ public extension HttpClient {
             data,
             to: url,
             method: endpoint.method,
-            headers: endpoint.headers
+            headers: buildHeaders(for: endpoint)
         )
 
         request.uploadProgress { prog in

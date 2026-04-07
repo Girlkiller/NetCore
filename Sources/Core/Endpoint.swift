@@ -8,8 +8,10 @@
 import Alamofire
 import Foundation
 
-import Alamofire
-import Foundation
+public enum HeaderStrategy {
+    case merge      // 默认：合并（common + endpoint）
+    case replace    // 完全覆盖（只用 endpoint）
+}
 
 public protocol Endpoint {
 
@@ -22,6 +24,8 @@ public protocol Endpoint {
     var task: RequestTask { get }
 
     var headers: HTTPHeaders? { get }
+
+    var headerStrategy: HeaderStrategy { get }
 
     var cachePolicy: CachePolicy { get }
     var cacheTTL: TimeInterval? { get }
@@ -37,6 +41,10 @@ public extension Endpoint {
 
     var headers: HTTPHeaders? {
         ["Content-Type": "application/json"]
+    }
+
+    var headerStrategy: HeaderStrategy {
+        .merge   // ✅ 默认合并
     }
 
     var cachePolicy: CachePolicy { .networkOnly }

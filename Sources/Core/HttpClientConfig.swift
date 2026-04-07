@@ -16,6 +16,8 @@ public struct HttpClientConfig {
 
     public var eventMonitors: [EventMonitor]
 
+    public let commonHeaders: HTTPHeaders?
+
     public var mockProvider: MockProvider?
 
     public var decoder: ResponseDecoder?
@@ -23,6 +25,7 @@ public struct HttpClientConfig {
     public init(
         timeout: TimeInterval = 30,
         interceptor: RequestInterceptor? = nil,
+        commonHeaders: HTTPHeaders? = nil,
         eventMonitors: [EventMonitor] = [],
         mockProvider: MockProvider? = nil,
         decoder: ResponseDecoder? = nil
@@ -30,6 +33,7 @@ public struct HttpClientConfig {
 
         self.timeout = timeout
         self.interceptor = interceptor
+        self.commonHeaders = commonHeaders
         self.eventMonitors = eventMonitors
         self.mockProvider = mockProvider
         self.decoder = decoder
