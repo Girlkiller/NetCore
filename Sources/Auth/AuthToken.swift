@@ -16,4 +16,23 @@ public struct AuthToken: Sendable, Codable {
         self.accessToken = accessToken
         self.refreshToken = refreshToken
     }
+
+    private enum CodingKeys: String, CodingKey {
+        case accessToken
+        case refreshToken
+        case access_token
+        case refresh_token
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        self.accessToken =
+        try container.decodeIfPresent(String.self, forKey: .accessToken)
+        ?? container.decode(String.self, forKey: .access_token)
+
+        self.refreshToken =
+        try container.decodeIfPresent(String.self, forKey: .refreshToken)
+        ?? container.decode(String.self, forKey: .refresh_token)
+    }
 }
