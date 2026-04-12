@@ -464,6 +464,34 @@ private extension HttpClient {
         default: return "\(value)"
         }
     }
+
+    private func handleResponse<T: Decodable>(
+        data: Data,
+        statusCode: Int?,
+        endpoint: Endpoint
+    ) throws -> T {
+
+        guard let code = statusCode else {
+            throw NetworkError.emptyResponse
+        }
+
+        /// ✅ 成功
+        if (200..<300).contains(code) {
+            return try decoder(for: endpoint)
+                .decode(T.self, from: data)
+        }
+
+        /// ❗ 解析 API 错误
+        let apiError = try? decoder(for: endpoint)
+            .decode(APIErrorResponse.self, from: data)
+
+        throw NetworkError.server(
+            code: code,
+            message: apiError?.message ?? "Unknown error",
+            response: apiError,
+            raw: data
+        )
+    }
 }
 
 public extension HttpClient {
@@ -475,10 +503,7 @@ public extension HttpClient {
         type: T.Type
     ) async throws -> T {
 
-        let urlString = endpoint.baseURL + endpoint.path
-
-        guard let url = URL(string: urlString)
-        else { throw NetworkError.invalidURL }
+        let url = try buildURL(from: endpoint)
 
         let request = session.upload(
             data,
@@ -491,22 +516,27 @@ public extension HttpClient {
             progress?(prog.fractionCompleted)
         }
 
-        let response = await request.serializingData().response
+        let response = await request
+            .serializingData()
+            .response
+
+        let statusCode = response.response?.statusCode
 
         switch response.result {
 
         case .success(let data):
 
-            let decoder = decoder(for: endpoint)
-
-            return try decoder.decode(T.self, from: data)
+            return try handleResponse(
+                data: data,
+                statusCode: statusCode,
+                endpoint: endpoint
+            )
 
         case .failure(let error):
 
+            /// 可选：networkElseCache（通常 upload 不需要）
             throw NetworkError.network(error)
-
         }
-
     }
 
 }
