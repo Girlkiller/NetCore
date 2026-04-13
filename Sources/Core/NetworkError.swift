@@ -10,6 +10,7 @@ import Foundation
 // MARK: - NetworkError
 
 public enum NetworkError: Error {
+    case invalidConfiguration
     // 核心网络
     case invalidURL
     case network(Error)
@@ -49,6 +50,7 @@ public extension NetworkError {
     /// 数字 code，用于日志、监控
     var code: Int {
         switch self {
+        case .invalidConfiguration: return 4003
             // 核心网络
         case .invalidURL: return 1000
         case .decode: return 1001
@@ -84,6 +86,8 @@ public extension NetworkError {
     /// 用于打印 / log 的调试信息
     var debugDescription: String {
         switch self {
+        case .invalidConfiguration:
+            return "[Config] ❌ HttpClient configuration invalid"
 
         case .invalidURL:
             return "[Network] ❌ Invalid URL"
@@ -175,6 +179,7 @@ public extension NetworkError {
     /// App 层本地化 key
     var localizationKey: String {
         switch self {
+        case .invalidConfiguration: return "invalid_configuration"
         case .invalidURL: return "invalid_url"
         case .decode: return "decode_error"
         case .network: return "network_error"
