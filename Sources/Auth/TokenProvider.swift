@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  TokenProvider.swift
 //  NetCore
 //
 //  Created by feng qiu on 2026/3/14.
@@ -11,4 +11,9 @@ public protocol TokenProvider: Sendable {
 
     func accessToken() async -> String?
 
+    func refreshToken() async throws -> String
+
+    func updateAccessToken(_ token: String) async
+
+    func updateRefreshToken(_ token: String) async
 }

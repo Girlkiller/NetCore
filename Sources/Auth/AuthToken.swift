@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  AuthToken.swift
 //  NetCore
 //
 //  Created by feng qiu on 2026/3/22.

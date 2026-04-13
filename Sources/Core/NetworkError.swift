@@ -26,10 +26,7 @@ public enum NetworkError: Error {
     case requestCoalesced
 
     // Token / Auth
-    case tokenRefreshFailed
-    case unauthorized
-    case forbidden
-    case invalidConfiguration
+    case authFailure(AuthFailureReason)
 
     // 文件上传 / 下载
     case fileNotFound
@@ -68,10 +65,7 @@ public extension NetworkError {
         case .requestCoalesced: return 3001
 
             // Token / Auth
-        case .tokenRefreshFailed: return 4000
-        case .unauthorized: return 4001
-        case .forbidden: return 4002
-        case .invalidConfiguration: return 4003
+        case .authFailure(let reason): return reason.rawValue
 
             // 文件上传 / 下载
         case .fileNotFound: return 5000
@@ -124,17 +118,23 @@ public extension NetworkError {
 
             // MARK: - Auth
 
-        case .tokenRefreshFailed:
-            return "[Auth] ❌ Token refresh failed"
-
-        case .unauthorized:
-            return "[Auth] ❌ Unauthorized (401)"
-
-        case .forbidden:
-            return "[Auth] ❌ Forbidden (403)"
-
-        case .invalidConfiguration:
-            return "[Config] ❌ HttpClient configuration invalid"
+        case .authFailure(let reason):
+            switch reason {
+            case .tokenMissing:
+                return "[Auth] ❌ Token missing (\(reason.rawValue))"
+            case .tokenInvalid:
+                return "[Auth] ❌ Token invalid (\(reason.rawValue))"
+            case .tokenExpired:
+                return "[Auth] ❌ Token expired (\(reason.rawValue))"
+            case .tokenRevoked:
+                return "[Auth] ❌ Token revoked (\(reason.rawValue))"
+            case .refreshTokenExpired:
+                return "[Auth] ❌ Refresh token expired (\(reason.rawValue))"
+            case .refreshTokenInvalid:
+                return "[Auth] ❌ Refresh token invalid (\(reason.rawValue))"
+            case .sessionRevoked:
+                return "[Auth] ❌ Session revoked (\(reason.rawValue))"
+            }
 
             // MARK: - File
 
@@ -187,10 +187,7 @@ public extension NetworkError {
         case .duplicateRequest: return "duplicate_request"
         case .requestCoalesced: return "request_coalesced"
 
-        case .tokenRefreshFailed: return "token_refresh_failed"
-        case .unauthorized: return "unauthorized"
-        case .forbidden: return "forbidden"
-        case .invalidConfiguration: return "invalid_configuration"
+        case .authFailure(let reason): return "auth_failure_\(reason)"
 
         case .fileNotFound: return "file_not_found"
         case .fileSaveFailed: return "file_save_failed"
@@ -216,7 +213,7 @@ public extension NetworkError {
     /// 是否适合直接显示给用户
     var shouldShow: Bool {
         switch self {
-        case .decode, .invalidConfiguration, .requestCoalesced:
+        case .decode, .requestCoalesced:
             return false
         default:
             return true

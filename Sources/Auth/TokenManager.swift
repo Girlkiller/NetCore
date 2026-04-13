@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  TokenManager.swift
 //  NetCore
 //
 //  Created by feng qiu on 2026/3/14.
@@ -48,7 +48,7 @@ extension TokenManager {
 
             logoutHandler?()
 
-            throw NetworkError.tokenRefreshFailed
+            throw NetworkError.authFailure(.refreshTokenInvalid)
 
         }
 
@@ -82,4 +82,7 @@ extension TokenManager {
 
     }
 
+    public func logout() {
+        logoutHandler?()
+    }
 }

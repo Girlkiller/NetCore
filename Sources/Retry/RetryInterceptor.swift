@@ -10,12 +10,15 @@ import Alamofire
 
 public final class RetryInterceptor: RequestInterceptor {
 
-    let tokenManager: TokenManager
+    private let maxRetryCount: Int
+    private let retryDelay: TimeInterval
 
-    public init(tokenManager: TokenManager) {
-
-        self.tokenManager = tokenManager
-
+    public init(
+        maxRetryCount: Int = 2,
+        retryDelay: TimeInterval = 1.0
+    ) {
+        self.maxRetryCount = maxRetryCount
+        self.retryDelay = retryDelay
     }
 
     public func retry(
@@ -25,41 +28,21 @@ public final class RetryInterceptor: RequestInterceptor {
         completion: @escaping (RetryResult) -> Void
     ) {
 
-        guard
-            let response = request.task?.response as? HTTPURLResponse,
-            response.statusCode == 401
+        // ❌ 已达到重试上限
+        guard request.retryCount < maxRetryCount else {
+            completion(.doNotRetry)
+            return
+        }
+
+        // ❌ 不是网络错误 → 不重试
+        guard let afError = error.asAFError,
+              afError.isSessionTaskError || afError.isResponseSerializationError
         else {
-
             completion(.doNotRetry)
             return
-
         }
 
-        /// 避免单请求无限 retry
-        if request.retryCount >= 1 {
-
-            completion(.doNotRetry)
-
-            return
-
-        }
-
-        Task {
-
-            do {
-
-                _ = try await tokenManager.refreshIfNeeded()
-
-                completion(.retry)
-
-            } catch {
-
-                completion(.doNotRetry)
-
-            }
-
-        }
-
+        // ✔ 网络错误 → 重试
+        completion(.retryWithDelay(retryDelay))
     }
-
 }

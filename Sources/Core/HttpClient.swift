@@ -14,11 +14,12 @@ public final class HttpClient {
 
     private let config: HttpClientConfig
 
-    public init(config: HttpClientConfig) {
+    private var tokenManager: TokenManager?
 
+    public init(config: HttpClientConfig, tokenManager: TokenManager? = nil) {
         self.config = config
         self.session = HttpClientFactory.makeSession(config: config)
-
+        self.tokenManager = tokenManager
     }
 }
 
@@ -26,11 +27,12 @@ public extension HttpClient {
 
     static func `default`(
         tokenProvider: TokenProvider? = nil,
-        mockProvider: MockProvider? = nil
+        mockProvider: MockProvider? = nil,
+        tokenManager: TokenManager? = nil
     ) -> HttpClient {
 
         let interceptor: RequestInterceptor? = tokenProvider.map {
-            AuthInterceptor(tokenProvider: $0)
+            AuthInterceptor(tokenProvider: $0, tokenManager: tokenManager)
         }
 
         let config = HttpClientConfig(
@@ -39,7 +41,7 @@ public extension HttpClient {
             mockProvider: mockProvider
         )
 
-        return HttpClient(config: config)
+        return HttpClient(config: config, tokenManager: tokenManager)
 
     }
 
@@ -186,31 +188,25 @@ public extension HttpClient {
         type: T.Type
     ) async throws -> T {
 
-        /// Mock
+        // MARK: Mock
         if let mock = config.mockProvider?.mockData(for: endpoint) {
-
             return try decoder(for: endpoint)
                 .decode(T.self, from: mock)
-
         }
 
-        /// cacheOnly
+        // MARK: cacheOnly
         if endpoint.cachePolicy == .cacheOnly {
-
             if let cache: T = try readCache(endpoint, type: T.self) {
                 return cache
             }
-
             throw NetworkError.cacheNotFound
         }
 
-        /// cacheFirst
+        // MARK: cacheFirst
         if endpoint.cachePolicy == .cacheFirst {
-
             if let cache: T = try readCache(endpoint, type: T.self) {
                 return cache
             }
-
         }
 
         let requestKey = endpoint.requestKey
@@ -218,48 +214,45 @@ public extension HttpClient {
         switch endpoint.deduplicationPolicy {
 
         case .coalesce:
-
             if let existing: Task<T, Error> =
                 await RequestPool.shared.get(requestKey) {
-
                 return try await existing.value
             }
 
         case .rejectDuplicate:
-
             if await RequestPool.shared.exists(requestKey) {
                 throw NetworkError.duplicateRequest
             }
 
         case .allowDuplicate:
             break
-
         }
 
+        // MARK: main task
         let task = Task<T, Error> {
 
             defer {
-
                 Task {
                     await RequestPool.shared.remove(requestKey)
                 }
-
             }
 
             return try await performRequest(endpoint)
-
         }
 
         if endpoint.deduplicationPolicy != .allowDuplicate {
-
             await RequestPool.shared.set(requestKey, task: task)
-
         }
 
-        return try await task.value
+        // MARK: 🔥 AUTH RETRY LAYER（关键新增）
+        do {
+            return try await task.value
 
+        } catch {
+
+            throw error
+        }
     }
-
 }
 
 private extension HttpClient {
@@ -268,7 +261,6 @@ private extension HttpClient {
         _ endpoint: Endpoint
     ) async throws -> T {
 
-        let key = cacheKey(for: endpoint)
         let url = try buildURL(from: endpoint)
 
         let request: DataRequest
@@ -355,31 +347,7 @@ private extension HttpClient {
 
         case .success(let data):
 
-            guard let code = statusCode else {
-                throw NetworkError.emptyResponse
-            }
-
-            /// ✅ 成功
-            if (200..<300).contains(code) {
-
-                if endpoint.cachePolicy != .none {
-                    HTTPCache.shared.save(data, key: key)
-                }
-
-                return try decoder(for: endpoint)
-                    .decode(T.self, from: data)
-            }
-
-            /// ❗ 失败解析
-            let apiError = try? decoder(for: endpoint)
-                .decode(APIErrorResponse.self, from: data)
-
-            throw NetworkError.server(
-                code: code,
-                message: apiError?.message ?? "Unknown error",
-                response: apiError,
-                raw: data
-            )
+            return try await handleResponse(data: data, statusCode: statusCode, endpoint: endpoint)
 
         case .failure(let error):
 
@@ -468,25 +436,34 @@ private extension HttpClient {
     private func handleResponse<T: Decodable>(
         data: Data,
         statusCode: Int?,
-        endpoint: Endpoint
-    ) throws -> T {
+        endpoint: Endpoint,
+        isUploading: Bool = false
+    ) async throws -> T {
 
-        guard let code = statusCode else {
+        let decoder = self.decoder(for: endpoint)
+
+        guard let httpCode = statusCode else {
             throw NetworkError.emptyResponse
         }
 
-        /// ✅ 成功
-        if (200..<300).contains(code) {
-            return try decoder(for: endpoint)
-                .decode(T.self, from: data)
+        let apiError = try? decoder.decode(APIErrorResponse.self, from: data)
+
+        // 🚨 业务 auth code 处理
+        if let code = apiError?.code, let reason = AuthCodeRouter.reason(code), let authInterceptor = config.authInterceptor {
+            try await authInterceptor.handleBusinessAuthError(error: .authFailure(reason))
+            throw NetworkError.authFailure(reason)
         }
 
-        /// ❗ 解析 API 错误
-        let apiError = try? decoder(for: endpoint)
-            .decode(APIErrorResponse.self, from: data)
+        if (200..<300).contains(httpCode) {
+            if !isUploading, endpoint.cachePolicy != .none {
+                let key = cacheKey(for: endpoint)
+                HTTPCache.shared.save(data, key: key)
+            }
+            return try decoder.decode(T.self, from: data)
+        }
 
         throw NetworkError.server(
-            code: code,
+            code: httpCode,
             message: apiError?.message ?? "Unknown error",
             response: apiError,
             raw: data
@@ -526,10 +503,11 @@ public extension HttpClient {
 
         case .success(let data):
 
-            return try handleResponse(
+            return try await handleResponse(
                 data: data,
                 statusCode: statusCode,
-                endpoint: endpoint
+                endpoint: endpoint,
+                isUploading: true
             )
 
         case .failure(let error):
