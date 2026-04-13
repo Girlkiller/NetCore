@@ -11,8 +11,6 @@ public protocol TokenProvider: Sendable {
 
     func accessToken() async -> String?
 
-    func refreshToken() async throws -> String
-
     func updateAccessToken(_ token: String) async
 
     func updateRefreshToken(_ token: String) async
