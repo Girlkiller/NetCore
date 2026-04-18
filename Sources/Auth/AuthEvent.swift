@@ -7,8 +7,13 @@
 
 import Foundation
 
-public struct AuthEvent: Sendable {
+public enum AuthEventType {
+    case requireLogin
+    case tokenRefreshed   // 👈 新增
+}
 
-    public let reason: AuthFailureReason
+public struct AuthEvent {
+    public let type: AuthEventType
+    public let reason: AuthFailureReason?
     public let code: Int?
 }

@@ -8,4 +8,5 @@
 public protocol AuthEventHandler: Sendable {
 
     func requireLogin(event: AuthEvent)
+    func tokenRefreshed(event: AuthEvent)
 }

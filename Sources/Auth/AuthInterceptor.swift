@@ -102,6 +102,8 @@ public extension AuthInterceptor {
                 await tokenProvider.updateAccessToken(token.accessToken)
                 await tokenProvider.updateRefreshToken(token.refreshToken)
 
+                emitTokenRefreshed()
+
             } catch {
                 emitLogin(reason: authFailureReason, code: authFailureReason.rawValue)
             }
@@ -134,6 +136,8 @@ private extension AuthInterceptor {
             await tokenProvider.updateAccessToken(token.accessToken)
             await tokenProvider.updateRefreshToken(token.refreshToken)
 
+            emitTokenRefreshed()
+
             let callbacks = await state.takeAll()
             callbacks.forEach { $0(.retry) }
 
@@ -155,8 +159,19 @@ private extension AuthInterceptor {
 
         eventHandler?.requireLogin(
             event: AuthEvent(
+                type: .requireLogin,
                 reason: reason,
                 code: code
+            )
+        )
+    }
+
+    func emitTokenRefreshed() {
+        eventHandler?.tokenRefreshed(
+            event: AuthEvent(
+                type: .tokenRefreshed,
+                reason: nil,
+                code: nil
             )
         )
     }
