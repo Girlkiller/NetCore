@@ -7,12 +7,12 @@
 
 import Foundation
 
-public enum AuthEventType {
+public enum AuthEventType: Sendable {
     case requireLogin
     case tokenRefreshed   // 👈 新增
 }
 
-public struct AuthEvent {
+public struct AuthEvent: Sendable {
     public let type: AuthEventType
     public let reason: AuthFailureReason?
     public let code: Int?
