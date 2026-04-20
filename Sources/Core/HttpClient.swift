@@ -211,11 +211,11 @@ public extension HttpClient {
 
         let requestKey = endpoint.requestKey
 
+        // MARK: deduplication (safe coalesce)
         switch endpoint.deduplicationPolicy {
 
         case .coalesce:
-            if let existing: Task<T, Error> =
-                await RequestPool.shared.get(requestKey) {
+            if let existing: Task<T, Error> = await RequestPool.shared.get(requestKey) {
                 return try await existing.value
             }
 
@@ -228,27 +228,33 @@ public extension HttpClient {
             break
         }
 
-        // MARK: main task
+        // MARK: create task
         let task = Task<T, Error> {
-
-            defer {
-                Task {
-                    await RequestPool.shared.remove(requestKey)
-                }
-            }
-
-            return try await performRequest(endpoint)
+            try await performRequest(endpoint)
         }
 
+        // MARK: register BEFORE await (important)
         if endpoint.deduplicationPolicy != .allowDuplicate {
             await RequestPool.shared.set(requestKey, task: task)
         }
 
-        // MARK: 🔥 AUTH RETRY LAYER（关键新增）
+        // MARK: wait result (single source of truth)
         do {
-            return try await task.value
+            let result = try await task.value
+
+            // MARK: cleanup ONLY after success/failure resolved
+            if endpoint.deduplicationPolicy != .allowDuplicate {
+                await RequestPool.shared.remove(requestKey)
+            }
+
+            return result
 
         } catch {
+
+            // MARK: cleanup on error too
+            if endpoint.deduplicationPolicy != .allowDuplicate {
+                await RequestPool.shared.remove(requestKey)
+            }
 
             throw error
         }
