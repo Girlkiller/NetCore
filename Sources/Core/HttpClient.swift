@@ -455,8 +455,7 @@ private extension HttpClient {
         let apiError = try? decoder.decode(APIErrorResponse.self, from: data)
 
         // 🚨 业务 auth code 处理
-        if let code = apiError?.code, let reason = AuthCodeRouter.reason(code), let authInterceptor = config.authInterceptor {
-            try await authInterceptor.handleBusinessAuthError(error: .authFailure(reason))
+        if let code = apiError?.code, let reason = AuthCodeRouter.reason(code) {
             throw NetworkError.authFailure(reason)
         }
 

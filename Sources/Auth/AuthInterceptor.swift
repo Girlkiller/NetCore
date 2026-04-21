@@ -58,9 +58,8 @@ public extension AuthInterceptor {
 
 // MARK: - Retry（仅兜底）
 
-public extension AuthInterceptor {
-
-    func retry(
+extension AuthInterceptor {
+    public func retry(
         _ request: Request,
         for session: Session,
         dueTo error: Error,
@@ -69,51 +68,23 @@ public extension AuthInterceptor {
 
         Task {
 
-            guard let response = request.task?.response as? HTTPURLResponse,
-                  response.statusCode == 401 else {
-                completion(.doNotRetry)
+            // ✅ 1. 业务 auth error
+            if let networkError = error as? NetworkError,
+               case .authFailure(let reason) = networkError {
+
+                await handleBusinessRetry(reason: reason, completion: completion)
                 return
             }
 
-            // ⚠️ 这里只是兜底（没有业务 code）
-            await refreshAccessTokenFallback(completion)
-        }
-    }
-}
+            // ✅ 2. HTTP 401 fallback
+            if let response = request.task?.response as? HTTPURLResponse,
+               response.statusCode == 401 {
 
-// MARK: - 核心：业务 code 驱动
-
-public extension AuthInterceptor {
-
-    func handleBusinessAuthError(error: NetworkError) async throws {
-        guard case .authFailure(let authFailureReason) = error, let tokenManager else {
-            throw error
-        }
-
-        let action = AuthCodeRouter.route(authFailureReason)
-
-        switch action {
-
-        case .refreshAccessToken:
-
-            do {
-                let token = try await tokenManager.refreshIfNeeded()
-
-                await tokenProvider.updateAccessToken(token.accessToken)
-                await tokenProvider.updateRefreshToken(token.refreshToken)
-
-                emitTokenRefreshed()
-
-            } catch {
-                emitLogin(reason: authFailureReason, code: authFailureReason.rawValue)
+                await refreshAccessTokenFallback(completion)
+                return
             }
 
-        case .requireLogin:
-
-            emitLogin(reason: authFailureReason, code: authFailureReason.rawValue)
-
-        case .ignore:
-            throw error
+            completion(.doNotRetry)
         }
     }
 }
@@ -147,6 +118,59 @@ private extension AuthInterceptor {
             callbacks.forEach { $0(.doNotRetryWithError(error)) }
 
             emitLogin(reason: .refreshTokenExpired, code: nil)
+        }
+    }
+
+    private func handleBusinessRetry(
+        reason: AuthFailureReason,
+        completion: @escaping (RetryResult) -> Void
+    ) async {
+
+        guard let tokenManager else {
+            completion(.doNotRetry)
+            return
+        }
+
+        await state.enqueue(completion)
+
+        guard await state.beginRefreshTokenIfNeeded() else { return }
+
+        let action = AuthCodeRouter.route(reason)
+
+        switch action {
+
+        case .refreshAccessToken:
+
+            do {
+                let token = try await tokenManager.refreshIfNeeded()
+
+                await tokenProvider.updateAccessToken(token.accessToken)
+                await tokenProvider.updateRefreshToken(token.refreshToken)
+
+                emitTokenRefreshed()
+
+                let callbacks = await state.takeAll()
+                callbacks.forEach { $0(.retry) }
+
+            } catch {
+
+                let callbacks = await state.takeAll()
+                callbacks.forEach { $0(.doNotRetryWithError(error)) }
+
+                emitLogin(reason: .refreshTokenExpired, code: nil)
+            }
+
+        case .requireLogin:
+
+            let callbacks = await state.takeAll()
+            callbacks.forEach { $0(.doNotRetry) }
+
+            emitLogin(reason: reason, code: reason.rawValue)
+
+        case .ignore:
+
+            let callbacks = await state.takeAll()
+            callbacks.forEach { $0(.doNotRetry) }
         }
     }
 }
