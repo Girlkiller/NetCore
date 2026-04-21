@@ -67,6 +67,15 @@ extension AuthInterceptor {
     ) {
 
         Task {
+            if case AFError.sessionInvalidated(let afError) = error {
+                // ✅ 1. 业务 auth error
+                if let networkError = afError as? NetworkError,
+                   case .authFailure(let reason) = networkError {
+
+                    await handleBusinessRetry(reason: reason, completion: completion)
+                    return
+                }
+            }
 
             // ✅ 1. 业务 auth error
             if let networkError = error as? NetworkError,
