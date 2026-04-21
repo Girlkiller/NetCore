@@ -271,7 +271,7 @@ private extension HttpClient {
 
         let request: DataRequest
 
-        // ✅ 根据 RequestTask 构建请求
+        // ✅ 构建请求
         switch endpoint.task {
 
         case .plain:
@@ -343,7 +343,33 @@ private extension HttpClient {
             )
         }
 
-        let response = await request
+        // 🔥🔥🔥 核心：把业务错误前移到 validate
+        let validatedRequest = request.validate {  _, response, data in
+
+            guard let data else { return .success(()) }
+
+            let apiError = try? JSONDecoder().decode(APIErrorResponse.self, from: data)
+
+            // ✅ 1️⃣ 业务 auth error（关键）
+            if let code = apiError?.code,
+               let reason = AuthCodeRouter.reason(code) {
+                return .failure(NetworkError.authFailure(reason))
+            }
+
+            // ✅ 2️⃣ HTTP error
+            if !(200..<300).contains(response.statusCode) {
+                return .failure(NetworkError.server(
+                    code: response.statusCode,
+                    message: apiError?.message ?? "Unknown error",
+                    response: apiError,
+                    raw: data
+                ))
+            }
+
+            return .success(())
+        }
+
+        let response = await validatedRequest
             .serializingData()
             .response
 
