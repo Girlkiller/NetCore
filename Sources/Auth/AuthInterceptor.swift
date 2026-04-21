@@ -67,17 +67,19 @@ extension AuthInterceptor {
     ) {
 
         Task {
-            if case AFError.sessionInvalidated(let afError) = error {
-                // ✅ 1. 业务 auth error
-                if let networkError = afError as? NetworkError,
-                   case .authFailure(let reason) = networkError {
+            // ✅ 1. 业务 auth error, firstly retry
+            if let afError = error as? AFError,
+               case let .responseValidationFailed(reason) = afError,
+               case let .customValidationFailed(innerError) = reason,
+               let networkError = innerError as? NetworkError {
 
+                if case let .authFailure(reason) = networkError {
                     await handleBusinessRetry(reason: reason, completion: completion)
                     return
                 }
             }
 
-            // ✅ 1. 业务 auth error
+            // ✅ 2. 业务 auth error
             if let networkError = error as? NetworkError,
                case .authFailure(let reason) = networkError {
 
@@ -85,7 +87,7 @@ extension AuthInterceptor {
                 return
             }
 
-            // ✅ 2. HTTP 401 fallback
+            // ✅ 3. HTTP 401 fallback
             if let response = request.task?.response as? HTTPURLResponse,
                response.statusCode == 401 {
 
