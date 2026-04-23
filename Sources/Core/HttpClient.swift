@@ -383,14 +383,16 @@ private extension HttpClient {
 
         case .failure(let error):
 
-            /// networkElseCache
+            let mappedError = NetworkError.from(error)
+
+            // ✅ networkElseCache
             if endpoint.cachePolicy == .networkElseCache {
                 if let cache: T = try readCache(endpoint, type: T.self) {
                     return cache
                 }
             }
 
-            throw NetworkError.network(error)
+            throw mappedError
         }
     }
 
@@ -480,19 +482,28 @@ private extension HttpClient {
 
         let apiError = try? decoder.decode(APIErrorResponse.self, from: data)
 
-        // 🚨 业务 auth code 处理
-        if let code = apiError?.code, let reason = AuthCodeRouter.reason(code) {
+        // ✅ 业务 auth code
+        if let code = apiError?.code,
+           let reason = AuthCodeRouter.reason(code) {
             throw NetworkError.authFailure(reason)
         }
 
+        // ✅ 成功
         if (200..<300).contains(httpCode) {
+
             if !isUploading, endpoint.cachePolicy != .none {
                 let key = cacheKey(for: endpoint)
                 HTTPCache.shared.save(data, key: key)
             }
-            return try decoder.decode(T.self, from: data)
+
+            do {
+                return try decoder.decode(T.self, from: data)
+            } catch {
+                throw NetworkError.decode(error)
+            }
         }
 
+        // ❌ 服务端错误
         throw NetworkError.server(
             code: httpCode,
             message: apiError?.message ?? "Unknown error",

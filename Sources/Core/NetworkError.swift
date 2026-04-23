@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Alamofire
 
 // MARK: - NetworkError
 
@@ -222,6 +223,88 @@ public extension NetworkError {
             return false
         default:
             return true
+        }
+    }
+}
+
+extension NetworkError {
+    static func from(_ error: Error) -> NetworkError {
+
+        // ✅ 1. 如果已经是 NetworkError，直接返回
+        if let networkError = error as? NetworkError {
+            return networkError
+        }
+
+        // ✅ 2. Alamofire 错误
+        if let afError = error.asAFError {
+            return mapAFError(afError)
+        }
+
+        // ✅ 3. URLSession 原生错误
+        if let urlError = error as? URLError {
+            return mapURLError(urlError)
+        }
+
+        // ✅ 4. 解码错误
+        if error is DecodingError {
+            return .decode(error)
+        }
+
+        // ✅ 5. fallback
+        return .network(error)
+    }
+}
+
+private extension NetworkError {
+
+    static func mapURLError(_ error: URLError) -> NetworkError {
+        switch error.code {
+
+        case .timedOut:
+            return .timeout
+
+        case .notConnectedToInternet:
+            return .offline
+
+        case .networkConnectionLost:
+            return .offline
+
+        case .cannotConnectToHost,
+                .cannotFindHost,
+                .dnsLookupFailed:
+            return .network(error)
+
+        case .cancelled:
+            return .cancelled
+
+        default:
+            return .network(error)
+        }
+    }
+}
+
+private extension NetworkError {
+
+    static func mapAFError(_ error: AFError) -> NetworkError {
+        switch error {
+
+        case .sessionTaskFailed(let underlyingError):
+            return NetworkError.from(underlyingError)
+
+        case .responseSerializationFailed:
+            return .decode(error)   // ✅ 用 AFError 本身
+
+        case .invalidURL:
+            return .invalidURL
+
+        case .createURLRequestFailed:
+            return .invalidConfiguration
+
+        case .explicitlyCancelled:
+            return .cancelled
+
+        default:
+            return .network(error)
         }
     }
 }
