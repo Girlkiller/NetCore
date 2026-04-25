@@ -359,7 +359,7 @@ private extension HttpClient {
             // ✅ 2️⃣ HTTP error
             if !(200..<300).contains(response.statusCode) {
                 return .failure(NetworkError.server(
-                    code: response.statusCode,
+                    code: apiError?.code ?? response.statusCode,
                     message: apiError?.message ?? "Unknown error",
                     response: apiError,
                     raw: data
