@@ -292,7 +292,7 @@ private extension NetworkError {
             return NetworkError.from(underlyingError)
 
         case .responseSerializationFailed:
-            return .decode(error)   // ✅ 用 AFError 本身
+            return .decode(error)
 
         case .invalidURL:
             return .invalidURL
@@ -302,6 +302,20 @@ private extension NetworkError {
 
         case .explicitlyCancelled:
             return .cancelled
+
+            // ✅ 关键补充
+        case .responseValidationFailed(let reason):
+            switch reason {
+
+            case .customValidationFailed(let error):
+                if let networkError = error as? NetworkError {
+                    return networkError
+                }
+                return .network(error)
+
+            default:
+                return .network(error)
+            }
 
         default:
             return .network(error)
